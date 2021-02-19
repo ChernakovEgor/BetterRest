@@ -8,9 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @State private var sleepTime = 8.0
+    @State private var wakeTime = Date()
+    
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        VStack {
+            Stepper(value: $sleepTime, in: 4...12, step: 0.25) {
+                Text("\(sleepTime, specifier: "%g") hours")
+            } .padding()
+            
+            DatePicker("Select date", selection: $wakeTime, in: Date()..., displayedComponents: .date)
+                .datePickerStyle(GraphicalDatePickerStyle())
+        }
     }
 }
 
