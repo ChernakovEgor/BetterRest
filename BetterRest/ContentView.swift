@@ -9,48 +9,64 @@ import SwiftUI
 
 struct ContentView: View {
     
+    static var defaultWakeTime: Date {
+        var components = DateComponents()
+        components.hour = 7
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }
+    
     @State private var sleepTime = 8.0
-    @State private var wakeTime = Date()
+    @State private var wakeTime = defaultWakeTime
     @State private var coffee = 1
+    //@State private var idealWakeTime = calculateBedTime()
     
     @State private var showingAlert = false
     @State private var alertTitle = ""
     @State private var alertMessege = ""
     
     var body: some View {
-        NavigationView {
+        VStack(alignment: .leading, spacing: 0) {
+            
             VStack(alignment: .leading) {
-                Text("When do you want to wake up?")
-                    .font(.largeTitle)
-                
-                DatePicker("Select time", selection: $wakeTime, displayedComponents: .hourAndMinute)
-                    .datePickerStyle(DefaultDatePickerStyle())
-                
-                Text("How much sleep do you want to get?")
-                    .font(.largeTitle)
-                
-                Stepper(value: $sleepTime, in: 4...12, step: 0.25) {
-                    Text("\(sleepTime, specifier: "%g") hours")
-                }
-                
-                Text("How much coffe did you drink?")
-                    .font(.largeTitle)
-                
-                Stepper(value: $coffee, in: 1...20, step: 1) {
-                    Text("\(coffee) cup\(coffee == 1 ? "" : "s")")
-                }
-                
-                Spacer()
+                Text("Perfect bedtime: ")
+                    .font(.largeTitle).bold()
+                Text("\(calculateBedTime())")
+                    .font(.largeTitle).bold()
             }
-            .navigationBarTitle("BetterRest")
-            .navigationBarItems(trailing: Button("Calculate", action: calculateBedTime))
-            .alert(isPresented: $showingAlert, content: {
-                Alert(title: Text(alertTitle), message: Text(alertMessege), dismissButton: .default(Text("Ok")))
-            })
+            .padding(.top, 25)
+            .padding(.leading, 20)
+
+                Form {
+                    Section() {
+                        Text("When do you want to wake up?")
+                            .font(.largeTitle)
+                        
+                        DatePicker("Select time", selection: $wakeTime, displayedComponents: .hourAndMinute)
+                            .datePickerStyle(WheelDatePickerStyle())
+                    }
+                    
+                    Section {
+                        Text("How much sleep do you want to get?")
+                            .font(.largeTitle)
+                        
+                        Stepper(value: $sleepTime, in: 4...12, step: 0.25) {
+                            Text("\(sleepTime, specifier: "%g") hours")
+                        }
+                    }
+                    
+                    Picker(selection: $coffee, label: Text("How much coffee did you drink?").font(.largeTitle)) {
+                        ForEach(0..<21) { cups in
+                            Text("\(cups) cup\(cups == 1 ? "" : "s")")
+                        }
+                    }.pickerStyle(MenuPickerStyle())
+                }
         }
+        .background(Color(UIColor.systemGray6))
+        .edgesIgnoringSafeArea(.all)
     }
     
-    func calculateBedTime() {
+    func calculateBedTime() -> String {
         let model = SleepCalculator()
         
         let components = Calendar.current.dateComponents([.hour, .minute], from: wakeTime)
@@ -63,15 +79,11 @@ struct ContentView: View {
             
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            
-            alertTitle = "Your ideal bedtime is..."
-            alertMessege = "\(formatter.string(from: sleepTime))"
-        } catch {
-            alertTitle = "Oopsie"
-            alertMessege = "Error occured while calculating your bedtime."
-        }
         
-        showingAlert = true
+            return "\(formatter.string(from: sleepTime))"
+        } catch {
+            return "Oopsie"
+        }
     }
 }
 
